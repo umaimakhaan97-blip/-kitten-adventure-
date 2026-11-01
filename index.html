@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kitten Adventure · Umiama Khan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #2b1b3a 0%, #4a2c5e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
+            padding: 12px;
+        }
+
+        /* main game card */
+        .game-wrapper {
+            background: #ffb8d1;
+            background-image: radial-gradient(circle at 20% 30%, #ffe0b0 0%, #ffb8d1 70%);
+            border-radius: 64px 64px 48px 48px;
+            padding: 18px 18px 24px;
+            box-shadow: 0 25px 35px rgba(0, 0, 0, 0.4), inset 0 2px 8px rgba(255, 255, 255, 0.7);
+            border: 3px solid #ffeaa1;
+            max-width: 700px;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        /* title with name */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 0 10px 10px 10px;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .game-title {
+            font-size: clamp(1.8rem, 9vw, 3rem);
+            font-weight: 900;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #f43f5e, #f97316, #facc15, #4ade80, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 4px 4px 0 #2d1b2e, 0 0 10px #ffb8d1;
+            line-height: 1.2;
+            filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.2));
+        }
+
+        .name-badge {
+            background: #ffedb0;
+            padding: 8px 18px;
+            border-radius: 60px;
+            font-weight: 800;
+            font-size: clamp(0.9rem, 3.5vw, 1.3rem);
+            color: #2d1b2e;
+            box-shadow: inset 0 -3px 0 #b07d4b, 0 8px 0 #6b3e1a, 0 10px 15px rgba(0, 0, 0, 0.2);
+            border: 2px solid #ffcf7a;
+            transform: rotate(-2deg);
+            white-space: nowrap;
+        }
+
+        /* canvas container */
+        .canvas-container {
+            position: relative;
+            border-radius: 40px;
+            overflow: hidden;
+            box-shadow: inset 0 0 0 6px #ffeaa1, 0 16px 25px rgba(0, 0, 0, 0.4);
+            background: #8bc7f0;
+            margin-bottom: 16px;
+            aspect-ratio: 4 / 3;
+            width: 100%;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: linear-gradient(#b3e0ff, #d4f0ff);
+            cursor: pointer;
+        }
+
+        /* stats / UI row */
+        .stats-panel {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 12px 18px;
+            padding: 4px 10px;
+            margin-bottom: 12px;
+        }
+
+        .score-box, .fish-box, .lives-box {
+            background: #ffffffd9;
+            backdrop-filter: blur(4px);
+            padding: 8px 22px;
+            border-radius: 100px;
+            font-weight: 800;
+            font-size: clamp(1rem, 4vw, 1.4rem);
+            box-shadow: inset 0 -4px 0 #b0b0b0, 0 6px 0 #5a4a3a, 0 6px 12px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid white;
+            color: #1e1e2f;
+            line-height: 1;
+        }
+
+        .fish-box {
+            background: #d4f0ff;
+        }
+
+        .lives-box {
+            background: #ffe4e9;
+        }
+
+        .score-box span, .fish-box span, .lives-box span {
+            font-size: 1.3em;
+            filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2));
+        }
+
+        /* action buttons */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 6px;
+        }
+
+        .btn {
+            background: #fbbf24;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 60px;
+            font-weight: 800;
+            font-size: clamp(1.1rem, 4vw, 1.5rem);
+            color: #2d1b2e;
+            box-shadow: 0 9px 0 #b45309, 0 10px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.06s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border: 2px solid #ffecb3;
+            letter-spacing: 1px;
+            min-width: 140px;
+            touch-action: manipulation;
+        }
+
+        .btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 3px 0 #b45309, 0 8px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.55;
+            transform: translateY(4px);
+            box-shadow: 0 5px 0 #6b3e1a, 0 8px 12px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+            filter: grayscale(0.3);
+        }
+
+        .btn.primary {
+            background: #ff7b9c;
+            box-shadow: 0 9px 0 #a12e4a, 0 10px 20px rgba(0, 0, 0, 0.3);
+            border-color: #ffd0dc;
+        }
+
+        .btn.primary:active {
+            box-shadow: 0 3px 0 #a12e4a, 0 8px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .footer-credit {
+            text-align: center;
+            margin-top: 16px;
+            font-weight: 600;
+            color: #3a2438;
+            font-size: clamp(0.8rem, 3vw, 1rem);
+            opacity: 0.85;
+            letter-spacing: 1px;
+            text-shadow: 0 1px 0 #ffd9b0;
+        }
+
+        /* small screens */
+        @media (max-width: 480px) {
+            .game-wrapper {
+                padding: 12px 10px 16px;
+                border-radius: 40px;
+            }
+            .stats-panel {
+                gap: 8px;
+            }
+            .score-box, .fish-box, .lives-box {
+                padding: 6px 14px;
+            }
+            .btn {
+                padding: 12px 18px;
+                min-width: 110px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="game-wrapper">
+    <div class="header">
+        <div class="game-title">🐱 KITTEN ADVENTURE</div>
+        <div class="name-badge">Umiama Khan</div>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+
+    <div class="stats-panel">
+        <div class="score-box">🏆 <span id="scoreDisplay">0</span></div>
+        <div class="fish-box">🐟 <span id="fishDisplay">0</span></div>
+        <div class="lives-box">❤️ <span id="livesDisplay">3</span></div>
+    </div>
+
+    <div class="controls">
+        <button class="btn primary" id="restartBtn">🔄 New Game</button>
+        <button class="btn" id="pauseBtn">⏸️ Pause</button>
+    </div>
+
+    <div class="footer-credit">✨ for Umiama Khan ✨</div>
+</div>
+
+<script>
+    (function(){
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Display elements
+        const scoreSpan = document.getElementById('scoreDisplay');
+        const fishSpan = document.getElementById('fishDisplay');
+        const livesSpan = document.getElementById('livesDisplay');
+        const restartBtn = document.getElementById('restartBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+
+        // Game state
+        let gameActive = false;
+        let gamePaused = false;
+        let score = 0;
+        let fishCollected = 0;
+        let lives = 3;
+        let lastTimestamp = 0;
+        let animationFrame = null;
+
+        // Canvas dimensions (logical)
+        const CW = 800;
+        const CH = 600;
+        canvas.width = CW;
+        canvas.height = CH;
+
+        // Kitten (player) properties
+        const kitten = {
+            x: 400,
+            y: 500,
+            width: 90,
+            height: 90,
+            speed: 9,
+            baseSpeed: 9,
+            invincible: false,
+            invincibleTimer: 0,
+            blink: false
+        };
+
+        // Dynamic arrays
+        let fishes = [];
+        let obstacles = [];
+
+        // Spawn control
+        let fishSpawnTimer = 0;
+        let obstacleSpawnTimer = 0;
+        const FISH_SPAWN_DELAY = 35;      // frames
+        const OBSTACLE_SPAWN_DELAY = 45;  // frames
+
+        // Keyboard / pointer input
+        let moveLeft = false;
+        let moveRight = false;
+        let moveUp = false;
+        let moveDown = false;
+
+        // Mouse/touch target (for click-to-move)
+        let targetX = null;
+        let targetY = null;
+        let useTarget = false;
+
+        // ----- RESET / INIT GAME -----
+        function resetGame() {
+            gameActive = true;
+            gamePaused = false;
+            score = 0;
+            fishCollected = 0;
+            lives = 3;
+            kitten.x = CW / 2;
+            kitten.y = CH - 100;
+            kitten.invincible = false;
+            kitten.invincibleTimer = 0;
+            kitten.blink = false;
+            kitten.speed = kitten.baseSpeed;
+
+            fishes = [];
+            obstacles = [];
+            fishSpawnTimer = 0;
+            obstacleSpawnTimer = 0;
+
+            moveLeft = false; moveRight = false; moveUp = false; moveDown = false;
+            targetX = null; targetY = null; useTarget = false;
+
+            updateUI();
+            pauseBtn.textContent = '⏸️ Pause';
+            pauseBtn.disabled = false;
+        }
+
+        // ----- UI UPDATE -----
+        function updateUI() {
+            scoreSpan.textContent = score;
+            fishSpan.textContent = fishCollected;
+            livesSpan.textContent = lives;
+        }
+
+        // ----- SPAWN FISH (colorful fish) -----
+        function spawnFish() {
+            const fishType = Math.floor(Math.random() * 3);
+            let color, points, size;
+            if (fishType === 0) { // small common
+                color = '#FFD966'; // gold
+                points = 10;
+                size = 22;
+            } else if (fishType === 1) { // medium
+                color = '#6EE7B7'; // mint
+                points = 20;
+                size = 30;
+            } else { // big rare
+                color = '#F472B6'; // pink
+                points = 35;
+                size = 38;
+            }
+
+            // random x within canvas bounds, y above kitten
+            const x = 40 + Math.random() * (CW - 80);
+            const y = 50 + Math.random() * (CH * 0.5); // upper half
+
+            fishes.push({
+                x, y,
+                baseX: x,
+                baseY: y,
+                size: size,
+                color: color,
+                points: points,
+                speedY: 1.0 + Math.random() * 1.8, // falling speed
+                wobble: Math.random() * Math.PI * 2,
+                wobbleSpeed: 0.04 + Math.random() * 0.05,
+                collectTimer: 0
+            });
+        }
+
+        // ----- SPAWN OBSTACLE (colorful but dangerous) -----
+        function spawnObstacle() {
+            const type = Math.floor(Math.random() * 3);
+            let color, size, speed;
+            if (type === 0) { // purple spike ball
+                color = '#C084FC';
+                size = 38;
+                speed = 2.0;
+            } else if (type === 1) { // red spiky
+                color = '#F87171';
+                size = 45;
+                speed = 1.7;
+            } else { // blue bomb
+                color = '#60A5FA';
+                size = 42;
+                speed = 2.3;
+            }
+
+            const x = 40 + Math.random() * (CW - 80);
+            const y = 20 + Math.random() * (CH * 0.3);
+
+            obstacles.push({
+                x, y,
+                size: size,
+                color: color,
+                speedY: speed,
+                wobble: Math.random() * Math.PI * 2,
+                wobbleSpeed: 0.03 + Math.random() * 0.04,
+            });
+        }
+
+        // ----- DRAW KITTEN (super cute & colorful) -----
+        function drawKitten() {
+            const k = kitten;
+            // Blink effect if invincible
+            if (k.invincible && (Math.floor(k.invincibleTimer / 5) % 2 === 0)) {
+                ctx.globalAlpha = 0.5;
+            }
+
+            // Ears
+            ctx.fillStyle = '#FFB347';
+            ctx.beginPath();
+            ctx.moveTo(k.x - 32, k.y - 42);
+            ctx.lineTo(k.x - 50, k.y - 78);
+            ctx.lineTo(k.x - 12, k.y - 62);
+            ctx.fill();
+            ctx.fillStyle = '#FF8C42';
+            ctx.beginPath();
+            ctx.moveTo(k.x + 32, k.y - 42);
+            ctx.lineTo(k.x + 50, k.y - 78);
+            ctx.lineTo(k.x + 12, k.y - 62);
+            ctx.fill();
+            // Inner ears
+            ctx.fillStyle = '#FFD1B3';
+            ctx.beginPath();
+            ctx.moveTo(k.x - 30, k.y - 50);
+            ctx.lineTo(k.x - 40, k.y - 72);
+            ctx.lineTo(k.x - 20, k.y - 62);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(k.x + 30, k.y - 50);
+            ctx.lineTo(k.x + 40, k.y - 72);
+            ctx.lineTo(k.x + 20, k.y - 62);
+            ctx.fill();
+
+            // Head (big round)
+            ctx.shadowColor = 'rgba(0,0,0,0.2)';
+            ctx.shadowBlur = 14;
+            ctx.shadowOffsetY = 6;
+            ctx.fillStyle = '#FFD966'; // golden fur
+            ctx.beginPath();
+            ctx.ellipse(k.x, k.y - 20, 48, 46, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Whiskers
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+            ctx.strokeStyle = '#5E3A1C';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(k.x - 26, k.y - 30);
+            ctx.lineTo(k.x - 58, k.y - 40);
+            ctx.moveTo(k.x - 26, k.y - 22);
+            ctx.lineTo(k.x - 62, k.y - 20);
+            ctx.moveTo(k.x - 24, k.y - 14);
+            ctx.lineTo(k.x - 56, k.y - 4);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(k.x + 26, k.y - 30);
+            ctx.lineTo(k.x + 58, k.y - 40);
+            ctx.moveTo(k.x + 26, k.y - 22);
+            ctx.lineTo(k.x + 62, k.y - 20);
+            ctx.moveTo(k.x + 24, k.y - 14);
+            ctx.lineTo(k.x + 56, k.y - 4);
+            ctx.stroke();
+
+            // Eyes
+            ctx.fillStyle = '#2F1B0C';
+            ctx.beginPath();
+            ctx.arc(k.x - 18, k.y - 28, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(k.x + 18, k.y - 28, 8, 0, Math.PI * 2);
+            ctx.fill();
+            // Eye sparkle
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(k.x - 22, k.y - 32, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(k.x + 14, k.y - 32, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Nose & mouth
+            ctx.fillStyle = '#FF8A9F';
+            ctx.beginPath();
+            ctx.ellipse(k.x, k.y - 14, 7, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#5E3A1C';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(k.x, k.y - 10);
+            ctx.lineTo(k.x - 6, k.y - 2);
+            ctx.moveTo(k.x, k.y - 10);
+            ctx.lineTo(k.x + 6, k.y - 2);
+            ctx.stroke();
+
+            // Body (with collar)
+            ctx.fillStyle = '#FFB347';
+            ctx.beginPath();
+            ctx.ellipse(k.x, k.y + 25, 38, 30, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Collar with bell
+            ctx.fillStyle = '#E63946';
+            ctx.beginPath();
+            ctx.ellipse(k.x, k.y + 2, 34, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#FFD966';
+            ctx.beginPath();
+            ctx.arc(k.x, k.y + 14, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#B8860B';
+            ctx.beginPath();
+            ctx.arc(k.x - 3, k.y + 11, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Reset alpha and shadow
+            ctx.globalAlpha = 1.0;
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+        }
+
+        // ----- DRAW FISH (colorful, animated) -----
+        function drawFish(f) {
+            ctx.shadowColor = 'rgba(0,0,0,0.2)';
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetY = 4;
+            // body
+            ctx.fillStyle = f.color;
+            ctx.beginPath();
+            ctx.ellipse(f.x, f.y, f.size * 0.9, f.size * 0.6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // tail
+            ctx.fillStyle = f.color;
+            ctx.beginPath();
+            ctx.moveTo(f.x - f.size * 0.9, f.y - f.size * 0.4);
+            ctx.lineTo(f.x - f.size * 1.6, f.y);
+            ctx.lineTo(f.x - f.size * 0.9, f.y + f.size * 0.4);
+            ctx.fill();
+            // eye
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(f.x + f.size * 0.35, f.y - f.size * 0.15, f.size * 0.18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#1E1E2F';
+            ctx.beginPath();
+            ctx.arc(f.x + f.size * 0.42, f.y - f.size * 0.18, f.size * 0.09, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+        }
+
+        // ----- DRAW OBSTACLE (spiky ball) -----
+        function drawObstacle(o) {
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 12;
+            ctx.shadowOffsetY = 5;
+            ctx.fillStyle = o.color;
+            ctx.beginPath();
+            // spiky shape
+            const spikes = 10;
+            const outerR = o.size * 0.8;
+            const innerR = o.size * 0.45;
+            for (let i = 0; i < spikes * 2; i++) {
+                const radius = i % 2 === 0 ? outerR : innerR;
+                const angle = (i * Math.PI) / spikes;
+                const x = o.x + radius * Math.cos(angle);
+                const y = o.y + radius * Math.sin(angle);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+            // inner glow
+            ctx.fillStyle = '#ffffff80';
+            ctx.beginPath();
+            ctx.arc(o.x, o.y, innerR * 0.7, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+        }
+
+        // ----- UPDATE GAME (movement, collision, spawning) -----
+        function updateGame() {
+            if (!gameActive || gamePaused) return;
+
+            // kitten invincibility timer
+            if (kitten.invincible) {
+                kitten.invincibleTimer--;
+                if (kitten.invincibleTimer <= 0) {
+                    kitten.invincible = false;
+                }
+            }
+
+            // ----- KITTEN MOVEMENT (keyboard) -----
+            const spd = kitten.speed;
+            if (moveLeft) kitten.x -= spd;
+            if (moveRight) kitten.x += spd;
+            if (moveUp) kitten.y -= spd;
+            if (moveDown) kitten.y += spd;
+
+            // ----- TARGET MOVEMENT (click/touch) -----
+            if (useTarget && targetX !== null && targetY !== null) {
+                const dx = targetX - kitten.x;
+                const dy = targetY - kitten.y;
+                const dist = Math.hypot(dx, dy);
+                if (dist > 8) {
+                    kitten.x += (dx / dist) * spd * 0.9;
+                    kitten.y += (dy / dist) * spd * 0.9;
+                } else {
+                    useTarget = false; // reached
+                }
+            }
+
+            // boundaries for kitten
+            const halfW = 50;
+            kitten.x = Math.max(halfW, Math.min(CW - halfW, kitten.x));
+            kitten.y = Math.max(120, Math.min(CH - 50, kitten.y));
+
+            // ----- SPAWNING -----
+            fishSpawnTimer++;
+            if (fishSpawnTimer >= FISH_SPAWN_DELAY) {
+                fishSpawnTimer = 0;
+                if (fishes.length < 18) spawnFish();
+            }
+
+            obstacleSpawnTimer++;
+            if (obstacleSpawnTimer >= OBSTACLE_SPAWN_DELAY) {
+                obstacleSpawnTimer = 0;
+                if (obstacles.length < 12) spawnObstacle();
+            }
+
+            // ----- UPDATE FISH -----
+            for (let i = fishes.length - 1; i >= 0; i--) {
+                const f = fishes[i];
+                // falling + wobble
+                f.wobble += f.wobbleSpeed;
+                f.y += f.speedY;
+                f.x = f.baseX + Math.sin(f.wobble) * 18;
+
+                // remove if off screen
+                if (f.y > CH + 60 || f.x < -80 || f.x > CW + 80) {
+                    fishes.splice(i, 1);
+                    continue;
+                }
+
+                // collision with kitten (only if not invincible? no — collect always)
+                const dx = f.x - kitten.x;
+                const dy = f.y - kitten.y - 10; // offset for head
+                const dist = Math.hypot(dx, dy);
+                if (dist < 50) {
+                    // collect fish
+                    score += f.points;
+                    fishCollected++;
+                    updateUI();
+                    fishes.splice(i, 1);
+                    // speed up kitten slightly (max 14)
+                    kitten.speed = Math.min(14, kitten.baseSpeed + fishCollected * 0.25);
+                }
+            }
+
+            // ----- UPDATE OBSTACLES -----
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const o = obstacles[i];
+                o.wobble += o.wobbleSpeed;
+                o.y += o.speedY;
+                o.x = o.x + Math.sin(o.wobble) * 0.8; // slight side drift
+
+                if (o.y > CH + 80 || o.x < -80 || o.x > CW + 80) {
+                    obstacles.splice(i, 1);
+                    continue;
+                }
+
+                // collision with kitten
+                if (!kitten.invincible) {
+                    const dx = o.x - kitten.x;
+                    const dy = o.y - kitten.y - 10;
+                    const dist = Math.hypot(dx, dy);
+                    if (dist < 48) {
+                        // HIT!
+                        lives--;
+                        updateUI();
+                        if (lives <= 0) {
+                            gameActive = false;
+                            pauseBtn.disabled = true;
+                        } else {
+                            // invincibility for 70 frames
+                            kitten.invincible = true;
+                            kitten.invincibleTimer = 70;
+                        }
+                        obstacles.splice(i, 1);
+                    }
+                }
+            }
+        }
+
+        // ----- RENDER EVERYTHING -----
+        function draw() {
+            ctx.clearRect(0, 0, CW, CH);
+
+            // background gradient (sky)
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, CH);
+            skyGrad.addColorStop(0, '#b3e0ff');
+            skyGrad.addColorStop(0.6, '#d4f0ff');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, CW, CH);
+
+            // clouds / decorative dots
+            ctx.fillStyle = '#ffffffb0';
+            for (let i = 0; i < 6; i++) {
+                ctx.beginPath();
+                ctx.arc(100 + i * 140, 70 + i * 20, 45, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // draw fishes
+            fishes.forEach(f => drawFish(f));
+
+            // draw obstacles
+            obstacles.forEach(o => drawObstacle(o));
+
+            // draw kitten (player)
+            drawKitten();
+
+            // overlay messages (game over / pause)
+            if (!gameActive && lives <= 0) {
+                ctx.fillStyle = '#000000b0';
+                ctx.fillRect(0, 0, CW, CH);
+                ctx.fillStyle = '#FFD966';
+                ctx.font = 'bold 60px "Segoe UI", Poppins, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.shadowColor = '#2d1b2e';
+                ctx.shadowBlur = 16;
+                ctx.fillText('GAME OVER', CW/2, CH/2 - 20);
+                ctx.font = 'bold 36px "Segoe UI", Poppins, sans-serif';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText('🐟 ' + fishCollected + '  |  🏆 ' + score, CW/2, CH/2 + 70);
+                ctx.shadowBlur = 0;
+            } else if (gamePaused && gameActive) {
+                ctx.fillStyle = '#00000080';
+                ctx.fillRect(0, 0, CW, CH);
+                ctx.fillStyle = '#FFD966';
+                ctx.font = 'bold 64px "Segoe UI", Poppins, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.shadowColor = '#2d1b2e';
+                ctx.shadowBlur = 20;
+                ctx.fillText('PAUSED', CW/2, CH/2);
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        // ----- GAME LOOP -----
+        function gameLoop(timestamp) {
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            // Update at roughly 60fps
+            if (gameActive && !gamePaused) {
+                updateGame();
+            }
+            draw();
+            animationFrame = requestAnimationFrame(gameLoop);
+        }
+
+        // ----- EVENT LISTENERS (keyboard) -----
+        function handleKeyDown(e) {
+            const key = e.key;
+            e.preventDefault(); // prevent scrolling
+
+            if (key === 'ArrowLeft' || key === 'a' || key === 'A') moveLeft = true;
+            if (key === 'ArrowRight' || key === 'd' || key === 'D') moveRight = true;
+            if (key === 'ArrowUp' || key === 'w' || key === 'W') moveUp = true;
+            if (key === 'ArrowDown' || key === 's' || key === 'S') moveDown = true;
+            // space for pause
+            if (key === ' ' || key === 'Space') {
+                e.preventDefault();
+                togglePause();
+            }
+            // reset with R
+            if (key === 'r' || key === 'R') {
+                resetGame();
+            }
+            // disable target movement when using keys
+            if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','a','A','d','D','w','W','s','S'].includes(key)) {
+                useTarget = false;
+            }
+        }
+
+        function handleKeyUp(e) {
+            const key = e.key;
+            if (key === 'ArrowLeft' || key === 'a' || key === 'A') moveLeft = false;
+            if (key === 'ArrowRight' || key === 'd' || key === 'D') moveRight = false;
+            if (key === 'ArrowUp' || key === 'w' || key === 'W') moveUp = false;
+            if (key === 'ArrowDown' || key === 's' || key === 'S') moveDown = false;
+            e.preventDefault();
+        }
+
+        // ----- CANVAS CLICK / TOUCH (move to target) -----
+        function handleCanvasPointer(e) {
+            e.preventDefault();
+            if (!gameActive || gamePaused) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            let clientX, clientY;
+            if (e.touches) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            const canvasX = (clientX - rect.left) * scaleX;
+            const canvasY = (clientY - rect.top) * scaleY;
+
+            targetX = Math.min(CW - 50, Math.max(50, canvasX));
+            targetY = Math.min(CH - 50, Math.max(120, canvasY));
+            useTarget = true;
+
+            // cancel keyboard movement
+            moveLeft = moveRight = moveUp = moveDown = false;
+        }
+
+        // ----- TOGGLE PAUSE -----
+        function togglePause() {
+            if (!gameActive) return;
+            gamePaused = !gamePaused;
+            pauseBtn.textContent = gamePaused ? '▶️ Resume' : '⏸️ Pause';
+        }
+
+        // ----- INIT & EVENT BINDING -----
+        function init() {
+            resetGame();
+
+            // Keyboard
+            window.addEventListener('keydown', handleKeyDown);
+            window.addEventListener('keyup', handleKeyUp);
+
+            // Canvas pointer (mouse & touch)
+            canvas.addEventListener('mousedown', handleCanvasPointer);
+            canvas.addEventListener('touchstart', handleCanvasPointer, { passive: false });
+
+            // Buttons
+            restartBtn.addEventListener('click', () => {
+                resetGame();
+            });
+            pauseBtn.addEventListener('click', togglePause);
+
+            // Prevent context menu on canvas
+            canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+            // Start game loop
+            if (animationFrame) cancelAnimationFrame(animationFrame);
+            animationFrame = requestAnimationFrame(gameLoop);
+        }
+
+        // start everything
+        init();
+    })();
+</script>
+</body>
+</html>
